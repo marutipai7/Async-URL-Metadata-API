@@ -1,9 +1,9 @@
 import httpx
-from bs4 import BeautifulSoup
-from app.schemas.metedata import URLMetadata
-from app.schemas.metedata import MetaDataRequest
 import logging
-
+from bs4 import BeautifulSoup
+from app.schemas.metadata import URLMetadata
+from app.schemas.metadata import MetaDataRequest
+from app.services.cache_service import cache_metadata, get_cached_metadata
 logger = logging.getLogger(__name__)
 
 # async def fetch_metadata(url:str) -> URLMetadata:
@@ -45,6 +45,21 @@ async def fetch_metadata(
         url: str,
         client: httpx.AsyncClient) -> URLMetadata:
 
+    cached_metadata = await get_cached_metadata(url)
+
+    if cached_metadata:
+        logger.info(
+            "Cache HIT for URL: %s",
+            url
+        )
+
+        return cached_metadata
+
+    logger.info(
+        "Cache MISS for URL: %s",
+        url
+    )
+
     try:
         response = await client.get(
             url,
@@ -71,13 +86,17 @@ async def fetch_metadata(
         if description_tag:
             description = description_tag.get("content")
 
-        return URLMetadata(
+        metadata =  URLMetadata(
             url=str(url),
             title=title,
             description=description,
             status_code=response.status_code,
             source="fetched",
         )
+
+        await cache_metadata(metadata)
+
+        return metadata
 
     except httpx.TimeoutException:
         logger.warning(
