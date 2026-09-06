@@ -14,7 +14,8 @@ class Metadata(Base):
 
     url: Mapped[str] = mapped_column(
         String,
-        nullable=False
+        nullable=False,
+        unique=True
     )
 
     title: Mapped[str | None] = mapped_column(

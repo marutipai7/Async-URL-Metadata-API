@@ -4,6 +4,7 @@ from app.db.database import get_db
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.metadata_services import fetch_metadata
+from app.services.database_service import save_metadata
 from app.schemas.metadata import MetaDataRequest, URLMetadata
 
 router = APIRouter(
@@ -36,4 +37,9 @@ async def get_metadata(
 
         results = await asyncio.gather(*tasks)
 
-        return results
+    await save_metadata(
+        metadata_items=results,
+        db=db
+        )
+
+    return results
