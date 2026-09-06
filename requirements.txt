@@ -1,0 +1,8 @@
+fastapi
+pydantic
+redis
+uvicorn
+beautifulsoup4
+httpx
+sqlalchemy
+asyncpg
