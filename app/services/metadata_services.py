@@ -1,7 +1,7 @@
 import httpx
 from bs4 import BeautifulSoup
-from app.schemas.metedata import URLMetadata
-from app.schemas.metedata import MetaDataRequest
+from app.schemas.metadata import URLMetadata
+from app.schemas.metadata import MetaDataRequest
 import logging
 
 logger = logging.getLogger(__name__)

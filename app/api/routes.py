@@ -1,8 +1,10 @@
-from fastapi import APIRouter
-from app.schemas.metedata import MetaDataRequest, URLMetadata
-from app.services.metedata_services import fetch_metadata
 import httpx
 import asyncio
+from app.db.database import get_db
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.metadata_services import fetch_metadata
+from app.schemas.metadata import MetaDataRequest, URLMetadata
 
 router = APIRouter(
     prefix="/api",
@@ -21,7 +23,10 @@ router = APIRouter(
 #     return metadata
 
 @router.post("/metadata", response_model=list[URLMetadata])
-async def get_metadata(request: MetaDataRequest):
+async def get_metadata(
+    request: MetaDataRequest,
+    db: AsyncSession = Depends(get_db)
+    ):
     async with httpx.AsyncClient() as client:
 
         tasks = [
