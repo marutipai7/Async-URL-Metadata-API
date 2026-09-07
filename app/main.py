@@ -4,7 +4,8 @@ from app.api.routes import router
 from app.db.database import engine
 from app.models.metadata import Base
 from contextlib import asynccontextmanager
-
+from app.db.redis import close_redis
+from app.core.middleware import timing_middleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,10 +22,11 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    await close_redis()
     await engine.dispose()
 
 app = FastAPI(lifespan=lifespan)
-
+app.middleware("http")(timing_middleware)
 app.include_router(router)
 
 @app.get("/")

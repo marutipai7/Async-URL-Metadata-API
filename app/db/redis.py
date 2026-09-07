@@ -6,3 +6,5 @@ redis_client = redis.from_url(
     decode_responses=True
 )
 
+async def close_redis():
+    await redis_client.close()
