@@ -37,3 +37,27 @@ async def save_metadata(
 
     await db.commit()
 
+
+async def get_metadata_from_db(
+        url:str,
+        db:AsyncSession
+) -> URLMetadata | None:
+
+    result = await db.execute(
+        select(Metadata).where(
+            Metadata.url == url
+        )
+    )
+
+    metadata = result.scalar_one_or_none()
+
+    if not metadata:
+        return None
+
+    return URLMetadata(
+        url=metadata.url,
+        title=metadata.title,
+        description=metadata.description,
+        status_code=metadata.status_code,
+        source="database"
+    )

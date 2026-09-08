@@ -2,8 +2,11 @@ import httpx
 import logging
 from bs4 import BeautifulSoup
 from app.schemas.metadata import URLMetadata
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.metadata import MetaDataRequest
 from app.services.cache_service import cache_metadata, get_cached_metadata
+
+
 logger = logging.getLogger(__name__)
 
 # async def fetch_metadata(url:str) -> URLMetadata:
@@ -41,24 +44,100 @@ logger = logging.getLogger(__name__)
 #         source=str(response.url),
 #     )
 
+# async def fetch_metadata(
+#         url: str,
+#         client: httpx.AsyncClient,
+#         db: AsyncSession) -> URLMetadata:
+
+#     cached_metadata = await get_cached_metadata(url)
+
+#     if cached_metadata:
+#         logger.info(
+#             "Cache HIT for URL: %s",
+#             url
+#         )
+
+#         return cached_metadata
+
+#     logger.info(
+#         "Cache MISS for URL: %s",
+#         url
+#     )
+
+#     try:
+#         response = await client.get(
+#             url,
+#             timeout=10.0,
+#             follow_redirects=True
+#         )
+
+#         soup = BeautifulSoup(
+#             response.text,
+#             "html.parser"
+#         )
+
+#         title = None
+#         description = None
+
+#         if soup.title and soup.title.string:
+#             title = soup.title.string.strip()
+
+#         description_tag = soup.find(
+#             "meta",
+#             attrs={"name": "description"},
+#         )
+
+#         if description_tag:
+#             description = description_tag.get("content")
+
+#         metadata =  URLMetadata(
+#             url=str(url),
+#             title=title,
+#             description=description,
+#             status_code=response.status_code,
+#             source="fetched",
+#         )
+
+#         await cache_metadata(metadata)
+
+#         return metadata
+
+#     except httpx.TimeoutException:
+#         logger.warning(
+#             "Timeout while fetching url: %s",
+#             url
+#         )
+
+#         return URLMetadata(
+#             url= str(url),
+#             error="Request Timeout",
+#             source="error"
+#         )
+
+#     except httpx.RequestError as exc:
+#         logger.warning(
+#             "Error while fetching url %s: %s",
+#             url,
+#             exc
+#         )
+
+#     except Exception:
+#         logger.exception(
+#             "Unexpected error while fetching URL: %s",
+#             url
+#         )
+
+#         return  URLMetadata(
+#             url=str(url),
+#             error="Unexpected Error",
+#             source="error"
+#         )
+
+
 async def fetch_metadata(
         url: str,
-        client: httpx.AsyncClient) -> URLMetadata:
-
-    cached_metadata = await get_cached_metadata(url)
-
-    if cached_metadata:
-        logger.info(
-            "Cache HIT for URL: %s",
-            url
-        )
-
-        return cached_metadata
-
-    logger.info(
-        "Cache MISS for URL: %s",
-        url
-    )
+        client: httpx.AsyncClient,
+) -> URLMetadata:
 
     try:
         response = await client.get(
@@ -94,10 +173,6 @@ async def fetch_metadata(
             source="fetched",
         )
 
-        await cache_metadata(metadata)
-
-        return metadata
-
     except httpx.TimeoutException:
         logger.warning(
             "Timeout while fetching url: %s",
@@ -117,6 +192,12 @@ async def fetch_metadata(
             exc
         )
 
+        return URLMetadata(
+            url=str(url),
+            error=str(exc),
+            source="error"
+        )
+    
     except Exception:
         logger.exception(
             "Unexpected error while fetching URL: %s",
